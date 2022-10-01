@@ -17,6 +17,19 @@ def index():
         return flask.render_template("order.html", noentry='True')
 
 
+@app.route('/cart/')
+def cart():
+    cursor.execute("SELECT cart FROM cart WHERE nickname = ?;", (flask.request.cookies.get("user"),))
+    cur = cursor.fetchone()
+    print(cur)
+    lent = str(cur).count("1")
+    cartitem = list()
+    for i in range(lent):
+        cartitem.append(str(cur)[str(cur).index("1"):str(cur).index("1") + 3])
+        print(cartitem)
+    return flask.render_template("cart.html", len=lent, cartitem=cartitem)
+
+
 @app.route('/about/')
 def order():
     return flask.render_template("index.html")
