@@ -26,7 +26,6 @@ def order():
 def reset():
     res = flask.make_response(flask.redirect('/'))
     res.set_cookie('user', 'no', max_age=0)
-    res.set_cookie('passwd', 'no', max_age=0)
     return res
 
 
@@ -35,12 +34,24 @@ def kfc():
     return flask.render_template("kfc.html")
 
 
-@app.route('/add/<int:db_id>')
-def add(db_id):
+@app.route('/delete/<int:db_id>')
+def delete(db_id):
     com = """UPDATE cart
              SET cart = ?
              WHERE nickname = ?;"""
     cursor.execute(com, (str(db_id) + " ", str(flask.request.cookies.get('user'))))
+    sqlite_connection.commit()
+    return flask.redirect('/')
+
+
+@app.route('/add/<int:db_id>')
+def add(db_id):
+    user = flask.request.cookies.get('user')
+    com = """UPDATE cart
+             SET cart = ?
+             WHERE nickname = ?;"""
+    cursor.execute("SELECT cart FROM cart WHERE nickname = ?;", (flask.request.cookies.get("user"),))
+    cursor.execute(com, (str(cursor.fetchone()) + " " + str(db_id) + " ", str(flask.request.cookies.get('user')),))
     sqlite_connection.commit()
     return flask.redirect('/')
 
@@ -56,6 +67,7 @@ def login():
             cursor.execute("SELECT passwd FROM cart;")
             pas = list(cursor.fetchone())
             print(nick)
+            sqlite_connection.commit()
             if flask.request.form['password'] in pas and pas.index(flask.request.form['password']) == nick.index(flask.request.form['user']):
                 res.set_cookie('user', flask.request.form['user'], max_age=60 * 60 * 24 * 365)
                 res.set_cookie('passwd', flask.request.form['password'], max_age=60 * 60 * 24 * 365)
@@ -66,10 +78,9 @@ def login():
             us = str(flask.request.form['user'])
             sqlite_insert_query = """INSERT INTO cart
                                       (nickname, cart, passwd)
-                                      VALUES (?, ?, ?);"""
-            cursor.execute(sqlite_insert_query, (us, 0, passw))
-            res.set_cookie('user', flask.request.form['user'], max_age=60 * 60 * 24 * 365)
-            res.set_cookie('passwd', flask.request.form['password'], max_age=60 * 60 * 24 * 365)
+                                      VALUES (?, '', ?);"""
+            cursor.execute(sqlite_insert_query, (us, passw))
+            res.set_cookie('user', us, max_age=60 * 60 * 24 * 365)
             sqlite_connection.commit()
         return res
     return flask.render_template("login.html")
