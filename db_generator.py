@@ -4,7 +4,7 @@ sqlite_connection = sqlite3.connect('cart.db')
 sqlite_create_table_query = '''CREATE TABLE cart (
                                 id INTEGER PRIMARY KEY,
                                 nickname TEXT NOT NULL,
-                                cart TEXT NOT NULL,
+                                cart TEXT,
                                 passwd TEXT NOT NULL);'''
 
 cursor = sqlite_connection.cursor()
